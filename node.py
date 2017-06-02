@@ -7,4 +7,5 @@ class Node(object):
 
     def get_dist(self, node):
         dist = math.sqrt(((self.pos[0] - node.pos[0]) ** 2) + ((self.pos[1] - node.pos[1]) ** 2))
+        return dist
 
