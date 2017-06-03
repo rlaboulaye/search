@@ -20,7 +20,7 @@ class AStar(Search):
     def __init__(self, field_dim, tag_radius, robot_radius):
         super(AStar, self).__init__(field_dim, tag_radius, robot_radius)
         self.graph = {}
-        self.error_tolerance = 5
+        self.error_tolerance = tag_radius
 
     def collision(self, node_pos, obstacle_pos_list, exclude_dist):
         for obstacle_pos in obstacle_pos_list:
@@ -66,6 +66,7 @@ class AStar(Search):
 
 # start_pos = [x, y], end_pos = [x, y], obstacle_pos = [[x0, y0], [x1, y1], ...], unit_length = d
     def get_path(self, start_pos, end_pos, obstacle_pos, unit_length):
+        start_pos = [(round(start_pos[0] / unit_length) * unit_length), (round(start_pos[1] / unit_length) * unit_length)]
         node_count = 1
         obstacle_pos_list = self.init_obstacles(obstacle_pos)
         self.init_graph(obstacle_pos_list, unit_length)
@@ -82,7 +83,9 @@ class AStar(Search):
         while not open_queue.empty():
             current_node = open_queue.get()[1]
             if current_node.get_heuristic(end_pos) < self.error_tolerance:
-                return reconstruct_path(came_from, current_node)
+                path = reconstruct_path(came_from, current_node)
+                self.print_grid(start_pos, end_pos, obstacle_pos, self.field_dim, unit_length, self.tag_radius * 2, path)
+                return path
             open_set.remove(current_node)
             closed_set.add(current_node)
             neighbor_nodes = self.graph[current_node.pos][1]
@@ -101,7 +104,47 @@ class AStar(Search):
                 neighbor_node.total_cost = neighbor_node.cost_from_start + neighbor_node.get_heuristic(end_pos)
         return None
 
+    def print_grid(self, start_pos, end_pos, obstacle_pos, field_dim, unit_length, tag_radius, path):
+        map_grid = [['-' for x in range(0, int(field_dim[0] / unit_length))] for y in range(0, int(field_dim[1] / unit_length))]
 
+        start_y = start_pos[1] - tag_radius
+        while start_y <= start_pos[1] + tag_radius:
+            start_x = start_pos[0] - tag_radius
+            while start_x <= start_pos[0] + tag_radius:
+                map_grid[int(start_y / unit_length)][int(start_x / unit_length)] = 'S'
+                start_x += 1
+            start_y += 1
+
+        end_y = end_pos[1] - tag_radius
+        while end_y <= end_pos[1] + tag_radius:
+            end_x = end_pos[0] - tag_radius
+            while end_x <= end_pos[0] + tag_radius:
+                map_grid[int(end_y / unit_length)][int(end_x / unit_length)] = 'E'
+                end_x += 1
+            end_y += 1
+
+        for obstacle in obstacle_pos:
+            obstacle_y = obstacle[1] - tag_radius
+            while obstacle_y <= obstacle[1] + tag_radius:
+                obstacle_x = obstacle[0] - tag_radius
+                while obstacle_x <= obstacle[0] + tag_radius:
+                    map_grid[int(obstacle_y / unit_length)][int(obstacle_x / unit_length)] = 'O'
+                    obstacle_x += 1
+                obstacle_y += 1
+
+        for y in range(0, int(field_dim[1] / unit_length)):
+            for x in range(0, int(field_dim[0] / unit_length)):
+                print(map_grid[y][x], end=' ')
+            print('\n', end='')
+
+        for pos in path:
+            print(pos)
+            map_grid[int(pos[1] / unit_length)][int(pos[0] / unit_length)] = 'X'
+
+        for y in range(0, int(field_dim[1] / unit_length)):
+            for x in range(0, int(field_dim[0] / unit_length)):
+                print(map_grid[y][x], end=' ')
+            print('\n', end='')
 
 class Position(object):
 
@@ -143,62 +186,59 @@ class Node(object):
 
 
 
-
-field_dim = [200, 200]
-tag_radius = 5
-robot_radius = 5
-unit_length = 5
-
-start_pos = [25, 25]
-
-obstacle_pos = []
-for x in range(0, 20):
-    new_obstacle = [int(random.randint(2 * tag_radius, field_dim[0] - 2 * tag_radius)), int(random.randint(2 * tag_radius, field_dim[1] - 2 * tag_radius))]
-    obstacle_pos.append(new_obstacle)
-
-end_pos = [int(random.randint(2 * tag_radius, field_dim[0] - 2 * tag_radius)), int(random.randint(2 * tag_radius, field_dim[1] - 2 * tag_radius))]
-
-map_grid = [['-' for x in range(0, int(field_dim[0] / unit_length))] for y in range(0, int(field_dim[1] / unit_length))]
-
-start_y = start_pos[1] - tag_radius
-while start_y <= start_pos[1] + tag_radius:
-    start_x = start_pos[0] - tag_radius
-    while start_x <= start_pos[0] + tag_radius:
-        map_grid[int(start_y / unit_length)][int(start_x / unit_length)] = 'S'
-        start_x += 1
-    start_y += 1
-
-end_y = end_pos[1] - tag_radius
-while end_y <= end_pos[1] + tag_radius:
-    end_x = end_pos[0] - tag_radius
-    while end_x <= end_pos[0] + tag_radius:
-        map_grid[int(end_y / unit_length)][int(end_x / unit_length)] = 'E'
-        end_x += 1
-    end_y += 1
-
-for obstacle in obstacle_pos:
-    obstacle_y = obstacle[1] - tag_radius
-    while obstacle_y <= obstacle[1] + tag_radius:
-        obstacle_x = obstacle[0] - tag_radius
-        while obstacle_x <= obstacle[0] + tag_radius:
-            map_grid[int(obstacle_y / unit_length)][int(obstacle_x / unit_length)] = 'O'
-            obstacle_x += 1
-        obstacle_y += 1
-
-for y in range(0, int(field_dim[1] / unit_length)):
-    for x in range(0, int(field_dim[0] / unit_length)):
-        print(map_grid[y][x], end=' ')
-    print('\n', end='')
-
-a = AStar(field_dim, tag_radius, robot_radius)
-path = a.get_path(start_pos, end_pos, obstacle_pos, unit_length)
-for pos in path:
-    print(pos)
-    map_grid[int(pos[1] / unit_length)][int(pos[0] / unit_length)] = 'X'
-
-for y in range(0, int(field_dim[1] / unit_length)):
-    for x in range(0, int(field_dim[0] / unit_length)):
-        print(map_grid[y][x], end=' ')
-    print('\n', end='')
-
-
+# field_dim = [200, 200]
+# tag_radius = 5
+# robot_radius = 5
+# unit_length = 5
+#
+# start_pos = [25, 25]
+#
+# obstacle_pos = []
+# for x in range(0, 20):
+#     new_obstacle = [int(random.randint(2 * tag_radius, field_dim[0] - 2 * tag_radius)), int(random.randint(2 * tag_radius, field_dim[1] - 2 * tag_radius))]
+#     obstacle_pos.append(new_obstacle)
+#
+# end_pos = [int(random.randint(2 * tag_radius, field_dim[0] - 2 * tag_radius)), int(random.randint(2 * tag_radius, field_dim[1] - 2 * tag_radius))]
+#
+# map_grid = [['-' for x in range(0, int(field_dim[0] / unit_length))] for y in range(0, int(field_dim[1] / unit_length))]
+#
+# start_y = start_pos[1] - tag_radius
+# while start_y <= start_pos[1] + tag_radius:
+#     start_x = start_pos[0] - tag_radius
+#     while start_x <= start_pos[0] + tag_radius:
+#         map_grid[int(start_y / unit_length)][int(start_x / unit_length)] = 'S'
+#         start_x += 1
+#     start_y += 1
+#
+# end_y = end_pos[1] - tag_radius
+# while end_y <= end_pos[1] + tag_radius:
+#     end_x = end_pos[0] - tag_radius
+#     while end_x <= end_pos[0] + tag_radius:
+#         map_grid[int(end_y / unit_length)][int(end_x / unit_length)] = 'E'
+#         end_x += 1
+#     end_y += 1
+#
+# for obstacle in obstacle_pos:
+#     obstacle_y = obstacle[1] - tag_radius
+#     while obstacle_y <= obstacle[1] + tag_radius:
+#         obstacle_x = obstacle[0] - tag_radius
+#         while obstacle_x <= obstacle[0] + tag_radius:
+#             map_grid[int(obstacle_y / unit_length)][int(obstacle_x / unit_length)] = 'O'
+#             obstacle_x += 1
+#         obstacle_y += 1
+#
+# for y in range(0, int(field_dim[1] / unit_length)):
+#     for x in range(0, int(field_dim[0] / unit_length)):
+#         print(map_grid[y][x], end=' ')
+#     print('\n', end='')
+#
+# a = AStar(field_dim, tag_radius, robot_radius)
+# path = a.get_path(start_pos, end_pos, obstacle_pos, unit_length)
+# for pos in path:
+#     print(pos)
+#     map_grid[int(pos[1] / unit_length)][int(pos[0] / unit_length)] = 'X'
+#
+# for y in range(0, int(field_dim[1] / unit_length)):
+#     for x in range(0, int(field_dim[0] / unit_length)):
+#         print(map_grid[y][x], end=' ')
+#     print('\n', end='')

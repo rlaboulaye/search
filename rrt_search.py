@@ -128,7 +128,7 @@ class RRTSearch(Search):
         y1 = q_new.pos[1]
         deltax = x1 - x0
         deltay = y1 - y0
-        
+
         if (abs(deltay) < abs(deltax)):
             a_first = False
             a0 = x0
@@ -147,7 +147,7 @@ class RRTSearch(Search):
             delta_a = deltay
             delta_b = deltax
             deltaerr = abs(deltax / deltay)
-        
+
         b_increment = 1
         if (delta_b < 0):
             b_increment = -1
@@ -195,11 +195,11 @@ class RRTSearch(Search):
         path = []
         q = q_goal
         while(q.parent != None):
-            path.append(q)
+            path.append(q.pos)
             self.visualization[int(q.pos[1]), int(q.pos[0])] = self.PATH
             self.plot_path_line(q.pos[0], q.parent.pos[0], q.pos[1], q.parent.pos[1])
             q = q.parent
         self.visualization[int(q.pos[1]), int(q.pos[0])] = self.PATH
-        path.append(q)
+        path.append(q.pos)
         path.reverse()
         return path
