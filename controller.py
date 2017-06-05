@@ -12,6 +12,7 @@ from random_field import RandomField as ranf
 from wheel_speed import WheelSpeed
 from a_star import AStar
 from rrt_search import RRTSearch
+from rrt_star import RRTStar
 
 def main(host, port):
     loop = asyncio.get_event_loop()
@@ -28,7 +29,7 @@ def main(host, port):
         return res
 
     def follow_waypoint(waypoint_position, goal, tag_radius):
-        max_force = 5
+        max_force = 2
         waypoint_radius = tag_radius * 2
         res = do('where others')
         others_dic = json.loads(res)
@@ -70,7 +71,7 @@ def main(host, port):
         others_dic = json.loads(res)
         corner1 = others_dic[goal]['corners'][0]
         corner3 = others_dic[goal]['corners'][2]
-        tag_radius = round(math.sqrt(((corner3[0] - corner1[0]) / 2) ** 2 + ((corner3[1] - corner1[1]) / 2) ** 2) * 1.5)
+        tag_radius = round(math.sqrt(((corner3[0] - corner1[0]) / 2) ** 2 + ((corner3[1] - corner1[1]) / 2) ** 2) * 1.2)
         robot_radius = tag_radius
 
         robot_dic = {}
@@ -106,8 +107,10 @@ def main(host, port):
 
     field_dim = [1920, 1080]
     goal = '6'
-    unit_length = 50
+    unit_length = 30
+    # search_strategy = RRTSearch
     search_strategy = AStar
+    # search_strategy = RRTStar
 
     solve_maze(search_strategy, field_dim, goal, unit_length)
 

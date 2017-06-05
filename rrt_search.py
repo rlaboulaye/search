@@ -89,29 +89,29 @@ class RRTSearch(Search):
     def create_occupancy_grid(self, field_dim, obstacle_pos, tag_radius, robot_radius):
         self.occ_grid = np.zeros((field_dim[1], field_dim[0]))
 
-        x0 = 0
-        x1 = robot_radius + 1
-        y0 = 0
-        y1 = field_dim[1]
-        self.occ_grid[y0:y1, x0:x1] = 1
-        self.plot_obstacle(x0, x1, y0, y1)
-
-        x0 = field_dim[0] - robot_radius - 1
-        x1 = field_dim[0]
-        self.occ_grid[y0:y1, x0:x1] = 1
-        self.plot_obstacle(x0, x1, y0, y1)
-
-        x0 = 0
-        x1 = field_dim[0]
-        y0 = 0
-        y1 = robot_radius + 1
-        self.occ_grid[y0:y1, x0:x1] = 1
-        self.plot_obstacle(x0, x1, y0, y1)
-
-        y0 = field_dim[1] - robot_radius - 1
-        y1 = field_dim[1]
-        self.occ_grid[y0:y1, x0:x1] = 1
-        self.plot_obstacle(x0, x1, y0, y1)
+        # x0 = 0
+        # x1 = robot_radius
+        # y0 = 0
+        # y1 = field_dim[1]
+        # self.occ_grid[y0:y1, x0:x1] = 1
+        # self.plot_obstacle(x0, x1, y0, y1)
+        #
+        # x0 = field_dim[0] - robot_radius
+        # x1 = field_dim[0]
+        # self.occ_grid[y0:y1, x0:x1] = 1
+        # self.plot_obstacle(x0, x1, y0, y1)
+        #
+        # x0 = 0
+        # x1 = field_dim[0]
+        # y0 = 0
+        # y1 = robot_radius
+        # self.occ_grid[y0:y1, x0:x1] = 1
+        # self.plot_obstacle(x0, x1, y0, y1)
+        #
+        # y0 = field_dim[1] - robot_radius
+        # y1 = field_dim[1]
+        # self.occ_grid[y0:y1, x0:x1] = 1
+        # self.plot_obstacle(x0, x1, y0, y1)
 
         for pos in obstacle_pos:
             x0 = pos[0] - tag_radius - robot_radius

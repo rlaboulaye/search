@@ -15,14 +15,17 @@ class AttractiveField(PotentialField):
             return [0., 0.]
         distance = self.get_distance(robot_position, object_position)
         angle = self.get_angle(robot_position, object_position)
-        if distance < self.object_radius:
-            dx = 0.
-            dy = 0.
-        elif (self.object_radius <= distance) and (distance <= (self.object_radius + self.slowdown_distance)):
-            dx = (self.max_force - ((self.max_force / self.slowdown_distance) * (self.object_radius + self.slowdown_distance - distance))) * np.cos(angle)
-            dy = (self.max_force - ((self.max_force / self.slowdown_distance) * (self.object_radius + self.slowdown_distance - distance))) * np.sin(angle)
-            # dx = self.scale_factor * (distance - self.object_radius) * np.cos(angle)
-            # dy = self.scale_factor * (distance - self.object_radius) * np.sin(angle)
+        if distance < self.object_radius + self.slowdown_distance:
+            dx = (self.max_force - ((self.max_force / (self.slowdown_distance + self.object_radius)) * (self.object_radius + self.slowdown_distance - distance) * .75)) * np.cos(angle)
+            dy = (self.max_force - ((self.max_force / (self.slowdown_distance + self.object_radius)) * (self.object_radius + self.slowdown_distance - distance) * .75)) * np.sin(angle)
+        # if distance < self.object_radius:
+        #     dx = 0.
+        #     dy = 0.
+        # elif (self.object_radius <= distance) and (distance <= (self.object_radius + self.slowdown_distance)):
+        #     dx = (self.max_force - ((self.max_force / self.slowdown_distance) * (self.object_radius + self.slowdown_distance - distance))) * np.cos(angle)
+        #     dy = (self.max_force - ((self.max_force / self.slowdown_distance) * (self.object_radius + self.slowdown_distance - distance))) * np.sin(angle)
+        #     # dx = self.scale_factor * (distance - self.object_radius) * np.cos(angle)
+        #     # dy = self.scale_factor * (distance - self.object_radius) * np.sin(angle)
         else:
             dx = self.max_force * np.cos(angle)
             dy = self.max_force * np.sin(angle)
