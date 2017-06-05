@@ -1,16 +1,9 @@
 import math
 import random
+import matplotlib.pyplot as plt
 from queue import PriorityQueue
 
 from search import Search
-
-def reconstruct_path(came_from, current_node):
-    path = [current_node.get_pos()]
-    while current_node in came_from.keys():
-        current_node = came_from[current_node]
-        path.append(current_node.get_pos())
-    path.reverse()
-    return path
 
 def dist(pos1, pos2):
     return math.sqrt(((pos2.x - pos1.x) ** 2) + ((pos2.y - pos1.y) ** 2))
@@ -21,6 +14,24 @@ class AStar(Search):
         super(AStar, self).__init__(field_dim, tag_radius, robot_radius)
         self.graph = {}
         self.error_tolerance = tag_radius
+        
+    def reconstruct_path(came_from, current_node):
+        path = [current_node.get_pos()]
+        while current_node in came_from.keys():
+            self.plot_line(current_node.x, came_from[current_node].x, current_node.y, came_from[current_node].y)
+            current_node = came_from[current_node]
+            path.append(current_node.get_pos())
+        path.reverse()
+        return path
+
+    def plot_obstacle(self, x0, x1, y0, y1):
+        for y in range(y0, y1):
+            ys = np.ones((x1 - x0))
+            ys = ys * y * -1
+            self.plt.scatter(range(x0, x1), ys, color='r')
+
+    def plot_line(self, x0, x1, y0, y1, color='b'):
+        self.plt.plot([x0, x1], [-1 * y0, -1 * y1], color=color)
 
     def collision(self, node_pos, obstacle_pos_list, exclude_dist):
         for obstacle_pos in obstacle_pos_list:
@@ -63,9 +74,18 @@ class AStar(Search):
                 x = x + unit_length
             y = y + unit_length
         return
+    
+    def init_plot(self, obstacle_pos):
+        for obstacle in obstacle_pos:
+            x0 = obstacle[0] - tag_radius - robot_radius
+            x1 = obstacle[0] + tag_radius + robot_radius + 1
+            y0 = obstacle[1] - tag_radius - robot_radius
+            y1 = obstacle[1] + tag_radius + robot_radius + 1
+            self.plot_obstacle(x0, x1, y0, y1)
 
 # start_pos = [x, y], end_pos = [x, y], obstacle_pos = [[x0, y0], [x1, y1], ...], unit_length = d
     def get_path(self, start_pos, end_pos, obstacle_pos, unit_length):
+        self.plt = plt
         start_pos = [(round(start_pos[0] / unit_length) * unit_length), (round(start_pos[1] / unit_length) * unit_length)]
         node_count = 1
         obstacle_pos_list = self.init_obstacles(obstacle_pos)
@@ -83,8 +103,9 @@ class AStar(Search):
         while not open_queue.empty():
             current_node = open_queue.get()[1]
             if current_node.get_heuristic(end_pos) < self.error_tolerance:
-                path = reconstruct_path(came_from, current_node)
+                path = self.reconstruct_path(came_from, current_node)
                 self.print_grid(start_pos, end_pos, obstacle_pos, self.field_dim, unit_length, self.tag_radius * 2, path)
+                self.plt.show()
                 return path
             open_set.remove(current_node)
             closed_set.add(current_node)
