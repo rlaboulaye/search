@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from rrt_node import RRTNode
 from search import Search
 
-class RRTSearch(Search):
+class RRTStar(Search):
 
     def __init__(self, field_dim, tag_radius, robot_radius):
-        super(RRTSearch, self).__init__(field_dim, tag_radius, robot_radius)
+        super(RRTStar, self).__init__(field_dim, tag_radius, robot_radius)
         self.EMPTY = 0
         self.OCCUPIED = 1
         self.START = 2
@@ -48,6 +48,9 @@ class RRTSearch(Search):
         self.plot_line(x0, x1, y0, y1, color='g')
 
     def get_path(self, start_pos, end_pos, obstacle_pos, unit_length):
+        max_nodes = self.field_dim[0]
+        node_count = 0
+        neighborhood_length = 2 * unit_length
         self.plt = plt
         self.create_occupancy_grid(self.field_dim, obstacle_pos, self.tag_radius, self.robot_radius)
 
@@ -59,8 +62,9 @@ class RRTSearch(Search):
         q_new = RRTNode([round(start_pos[0]), round(start_pos[1])])
         q_goal = RRTNode([round(end_pos[0]), round(end_pos[1])])
         self.nodes.append(q_new)
+        q_last = None
 
-        while(q_new.get_dist(q_goal) > unit_length):
+        while(q_new.get_dist(q_goal) > unit_length or node_count < max_nodes):
             q_backup = q_new
             q_rand = self.get_random_node()
             q_near = self.get_nearest_node(q_rand)
@@ -70,16 +74,40 @@ class RRTSearch(Search):
                 unit_vector = self.get_unit_vector(unit_length, q_near, q_rand)
                 pos = [round(q_near.pos[0] + unit_vector[0]), round(q_near.pos[1] + unit_vector[1])]
                 q_new = RRTNode(pos)
-            if (self.visualization[int(q_new.pos[1]), int(q_new.pos[0])] != self.EMPTY or self.occupied(q_near, q_new)):
+            if (self.visualization[int(q_new.pos[1]), int(q_new.pos[0])] != self.EMPTY):
                 q_new = q_backup
                 continue
+            q_parent = q_near
+            lowest_cost = q_parent.cost + q_new.get_dist(q_parent)
+            neighbors = q_new.get_neighborhood(self.nodes, neighborhood_length)
+            for neighbor in neighbors:
+                cost = neighbor.cost + q_new.get_dist(neighbor)
+                if (cost < lowest_cost):
+                    lowest_cost = cost
+                    q_parent = neighbor
+            if (self.occupied(q_parent, q_new)):
+                q_new = q_backup
+                continue
+            node_count += 1
             self.visualization[int(q_new.pos[1]), int(q_new.pos[0])] = self.NODE
-            self.plot_line(q_near.pos[0], q_new.pos[0], q_near.pos[1], q_new.pos[1])
-            q_near.add_child(q_new)
-            q_new.set_parent(q_near)
+            #self.plot_line(q_parent.pos[0], q_new.pos[0], q_parent.pos[1], q_new.pos[1])
+            q_new.set_parent(q_parent)
             self.nodes.append(q_new)
-        q_new.add_child(q_goal)
-        q_goal.set_parent(q_new)
+            neighbors.append(q_new)
+            changed = True
+            while(changed):
+                changed = False
+                for node1 in neighbors:
+                    for node2 in neighbors:
+                        if (node1 != node2):
+                            new_cost = node2.cost + node1.get_dist(node2)
+                            if (new_cost < node1.cost and not self.occupied(node2, node1)):
+                                node1.set_parent(node2)
+                                changed = True
+            if (q_new.get_dist(q_goal) <= unit_length):
+                if (q_last == None or (q_last.cost + q_last.get_dist(q_goal)) > (q_new.cost + q_new.get_dist(q_goal))):
+                    q_last = q_new
+        q_goal.set_parent(q_last)
         #self.print_visualization()
         path = self.create_path(q_goal)
         #self.print_visualization()
