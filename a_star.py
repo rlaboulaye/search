@@ -1,6 +1,7 @@
 import math
 import random
 import matplotlib.pyplot as plt
+import numpy as np
 from queue import PriorityQueue
 
 from search import Search
@@ -14,8 +15,8 @@ class AStar(Search):
         super(AStar, self).__init__(field_dim, tag_radius, robot_radius)
         self.graph = {}
         self.error_tolerance = tag_radius
-        
-    def reconstruct_path(came_from, current_node):
+
+    def reconstruct_path(self, came_from, current_node):
         path = [current_node.get_pos()]
         while current_node in came_from.keys():
             self.plot_line(current_node.x, came_from[current_node].x, current_node.y, came_from[current_node].y)
@@ -35,8 +36,11 @@ class AStar(Search):
 
     def collision(self, node_pos, obstacle_pos_list, exclude_dist):
         for obstacle_pos in obstacle_pos_list:
-            if dist(node_pos, obstacle_pos) <= exclude_dist:
+            if (obstacle_pos.x - exclude_dist <= node_pos.x and node_pos.x <= obstacle_pos.x + exclude_dist) and \
+               (obstacle_pos.y - exclude_dist <= node_pos.y and node_pos.y <= obstacle_pos.y + exclude_dist):
                 return True
+#            if dist(node_pos, obstacle_pos) <= exclude_dist:
+#                return True
         return False
 
     def init_obstacles(self, obstacle_pos_list):
@@ -74,8 +78,8 @@ class AStar(Search):
                 x = x + unit_length
             y = y + unit_length
         return
-    
-    def init_plot(self, obstacle_pos):
+
+    def init_plot(self, obstacle_pos, tag_radius, robot_radius):
         for obstacle in obstacle_pos:
             x0 = obstacle[0] - tag_radius - robot_radius
             x1 = obstacle[0] + tag_radius + robot_radius + 1
@@ -90,6 +94,7 @@ class AStar(Search):
         node_count = 1
         obstacle_pos_list = self.init_obstacles(obstacle_pos)
         self.init_graph(obstacle_pos_list, unit_length)
+        self.init_plot(obstacle_pos, self.tag_radius, self.robot_radius)
         came_from = {}
         open_queue = PriorityQueue()
         open_set = set()
@@ -188,6 +193,8 @@ class Node(object):
 
     def __init__(self, pos):
         self.pos = pos
+        self.x = self.pos.x
+        self.y = self.pos.y
         self.cost_from_start = float('inf')
         self.total_cost = float('inf')
 
